@@ -88,6 +88,7 @@ pub enum OperationError {
     NotFoundInDb(String),
     BugExplanation(String),
     FeatureNotAvailable,
+    UnknownCryptoError,
 }
 
 impl fmt::Display for OperationError {
@@ -114,6 +115,7 @@ impl fmt::Display for OperationError {
             &OperationError::NotFoundInDb(ref expl) => write!(fmt, "Entry was not found in db: {}", expl),
             &OperationError::BugExplanation(ref expl) => write!(fmt, "BUG: {}", expl),
             &OperationError::FeatureNotAvailable => write!(fmt, "This feature is not available"),
+            &OperationError::UnknownCryptoError => write!(fmt, "Unknown crypto operation error occurred"),
         }
     }
 }
@@ -132,6 +134,7 @@ impl convert::From<context::Error> for OperationError {
             }
             context::Error::YubikeyError { message } => OperationError::Action(Some(message), io::Error::new(io::ErrorKind::Other, "")),
             context::Error::FeatureNotAvailable => OperationError::FeatureNotAvailable,
+            context::Error::UnknownCryptoError => OperationError::UnknownCryptoError,
         }
     }
 }
@@ -187,7 +190,7 @@ impl PasswordPromptString for VolumeId {
     }
 
     fn prompt_string(&self) -> String {
-        format!("Please enter passphrase for {}:", self.prompt_name())
+        format!("Please enter existing passphrase for {}: ", self.prompt_name())
     }
 }
 

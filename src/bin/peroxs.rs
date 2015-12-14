@@ -133,7 +133,7 @@ fn get_new_container_parameters(args: &Args) -> Option<NewContainerParameters> {
 fn get_yubikey_entry_type(args: &Args) -> Option<YubikeyEntryType> {
     if args.cmd_yubikey {
         let entry_type = if args.cmd_hybrid {
-            YubikeyEntryType::ChallengeResponseHybrid
+            YubikeyEntryType::HybridChallengeResponse
         } else {
             YubikeyEntryType::ChallengeResponse
         };

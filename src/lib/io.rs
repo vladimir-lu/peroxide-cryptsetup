@@ -21,7 +21,7 @@ pub struct KeyWrapper {
 }
 
 impl KeyWrapper {
-    pub fn as_vec<'a>(&'a self) -> &'a [u8] {
+    pub fn as_slice<'a>(&'a self) -> &'a [u8] {
         &self.data[..]
     }
 
@@ -214,16 +214,10 @@ mod unsafe_passphrase {
 #[cfg(feature = "yubikey")]
 pub mod yubikey {
     use super::KeyWrapper;
-    use ykpers_rs::{YubikeyDevice, ResponseLength, ChallengeResponse, ChallengeResponseParams};
-    use ykpers_rs;
+    use ykpers_rs::RESPONSE_LENGTH;
 
-    pub fn challenge_response(dev: &mut YubikeyDevice,
-                              params: ChallengeResponseParams,
-                              challenge: &KeyWrapper)
-                              -> ykpers_rs::Result<KeyWrapper> {
-        let mut response = [0u8; ResponseLength];
-        // TODO - how to avoid the clone in .to_vec()
-        dev.challenge_response(params, challenge.as_vec(), &mut response).map(|_| KeyWrapper { data: response.to_vec() })
+    pub fn wrap(key: [u8; RESPONSE_LENGTH]) -> KeyWrapper {
+        KeyWrapper { data: key.to_vec() }
     }
 }
 

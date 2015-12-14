@@ -13,7 +13,7 @@ static MIN_VERSION_CHAL_RESP: Version = (2, 2, 0);
 
 pub type Result<T> = result::Result<T, Error>;
 pub type Version = (i32, i32, i32);
-pub const ResponseLength: usize = ffi::SHA1_MAX_BLOCK_SIZE;
+pub const RESPONSE_LENGTH: usize = ffi::SHA1_MAX_BLOCK_SIZE;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ValidationError {
@@ -139,11 +139,19 @@ pub struct ChallengeResponseParams {
 }
 
 pub trait ChallengeResponse {
-    fn challenge_response(&mut self, params: ChallengeResponseParams, challenge: &[u8], response: &mut [u8; ResponseLength]) -> Result<()>;
+    fn challenge_response(&mut self,
+                          params: ChallengeResponseParams,
+                          challenge: &[u8],
+                          response: &mut [u8; RESPONSE_LENGTH])
+                          -> Result<()>;
 }
 
 impl ChallengeResponse for YubikeyDevice {
-    fn challenge_response(&mut self, params: ChallengeResponseParams, challenge: &[u8], response: &mut [u8; ResponseLength]) -> Result<()> {
+    fn challenge_response(&mut self,
+                          params: ChallengeResponseParams,
+                          challenge: &[u8],
+                          response: &mut [u8; RESPONSE_LENGTH])
+                          -> Result<()> {
 
         // check version of yubikey
         let status = try!(self.get_status());

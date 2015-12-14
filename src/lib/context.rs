@@ -32,6 +32,7 @@ pub enum Error {
     YubikeyError {
         message: String,
     },
+    UnknownCryptoError,
     FeatureNotAvailable,
 }
 
@@ -48,7 +49,7 @@ pub trait PasswordInput: Sized {
 }
 
 pub trait YubikeyInput: PasswordInput {
-    fn read_yubikey(&self, name: Option<&str>, slot: YubikeySlot, entry_type: YubikeyEntryType) -> Result<KeyWrapper>;
+    fn read_yubikey(&self, name: Option<&str>, uuid: &uuid::Uuid, slot: YubikeySlot, entry_type: YubikeyEntryType) -> Result<KeyWrapper>;
 }
 
 pub trait DiskSelector {
@@ -108,7 +109,7 @@ impl PasswordInput for MainContext {
 #[cfg(not(feature = "yubikey"))]
 impl YubikeyInput for MainContext {
     #[allow(unused)]
-    fn read_yubikey(&self, name: Option<&str>, slot: YubikeySlot, entry_type: YubikeyEntryType) -> Result<KeyWrapper> {
+    fn read_yubikey(&self, name: Option<&str>, uuid: &uuid::Uuid, slot: YubikeySlot, entry_type: YubikeyEntryType) -> Result<KeyWrapper> {
         Err(Error::FeatureNotAvailable)
     }
 }

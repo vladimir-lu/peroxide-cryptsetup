@@ -1,4 +1,4 @@
-// #![deny(warnings)]
+#![deny(warnings)]
 #[warn(unused_must_use)]
 
 extern crate rustc_serialize;
@@ -24,6 +24,9 @@ mod yubikey;
 
 #[cfg(feature = "yubikey")]
 extern crate ykpers_rs;
+
+#[cfg(feature = "yubikey_hybrid")]
+extern crate sodiumoxide;
 
 #[cfg(test)]
 extern crate tempfile;
