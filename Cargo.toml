@@ -5,8 +5,9 @@ authors = ["Vladimir Lushnikov <vladimir@solidninja.is>"]
 build = "build.rs"
 
 [features]
-default = ["yubikey"]
+default = ["yubikey", "yubikey_hybrid"]
 yubikey = ["ykpers-rs"]
+yubikey_hybrid = ["yubikey", "sodiumoxide"]
 
 [build-dependencies]
 syntex = "*"
@@ -19,6 +20,7 @@ serde = "*"
 serde_json = "*"
 uuid = "*"
 errno = "*"
+sodiumoxide = { version = "*", optional = true }
 
 # TODO - decide on what logger to use :)
 log = "*"

@@ -14,3 +14,8 @@ Code cleanup:
 
 Other:
  ☐ Use rustdoc for all public APIs
+
+ - TODO TODO TODO https://github.com/rust-lang/rust/issues/27060
+
+ https://github.com/Yubico/yubikey-personalization/blob/master/ykchalresp.c
+

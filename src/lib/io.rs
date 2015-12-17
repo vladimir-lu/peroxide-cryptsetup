@@ -135,6 +135,8 @@ mod unsafe_passphrase {
 
     pub struct TerminalPrompt;
 
+    // TODO - write a test for ensuring LF does not appear at the end of output
+
     impl TerminalPrompt {
         fn read_passphrase<R: Read>(reader: &mut R) -> io::Result<KeyWrapper> {
             let mut buf = [0u8; MAX_PASSPHRASE_LENGTH];
@@ -143,7 +145,7 @@ mod unsafe_passphrase {
                 Err(io::Error::new(io::ErrorKind::Other,
                                    "Unexpected EOF while reading".to_string()))
             } else {
-                let key_wrapper = KeyWrapper { data: buf[..len].to_vec() };
+                let key_wrapper = KeyWrapper { data: buf[..len - 1].to_vec() };
                 // TODO - erase the contents of buf
                 Ok(key_wrapper)
             }
@@ -214,9 +216,8 @@ mod unsafe_passphrase {
 #[cfg(feature = "yubikey")]
 pub mod yubikey {
     use super::KeyWrapper;
-    use ykpers_rs::RESPONSE_LENGTH;
 
-    pub fn wrap(key: [u8; RESPONSE_LENGTH]) -> KeyWrapper {
+    pub fn wrap(key: &[u8]) -> KeyWrapper {
         KeyWrapper { data: key.to_vec() }
     }
 }

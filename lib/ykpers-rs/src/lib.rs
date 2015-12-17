@@ -13,7 +13,9 @@ static MIN_VERSION_CHAL_RESP: Version = (2, 2, 0);
 
 pub type Result<T> = result::Result<T, Error>;
 pub type Version = (i32, i32, i32);
-pub const RESPONSE_LENGTH: usize = ffi::SHA1_MAX_BLOCK_SIZE;
+
+pub const SHA1_BLOCK_LENGTH: usize = ffi::SHA1_MAX_BLOCK_SIZE;
+pub const SHA1_RESPONSE_LENGTH: usize = ffi::SHA1_DIGEST_SIZE;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ValidationError {
@@ -53,8 +55,7 @@ impl Error {
 
     fn from_zero_err(res: i32) -> Result<()> {
         if res == 0 {
-            // TODO - do we call yk_errno() here?
-            Err(Error::Unknown(0))
+            Error::from(ffi::yk_errno()).map(|_| panic!("BUG: expecting error for zero return code"))
         } else {
             Ok(())
         }
@@ -142,7 +143,7 @@ pub trait ChallengeResponse {
     fn challenge_response(&mut self,
                           params: ChallengeResponseParams,
                           challenge: &[u8],
-                          response: &mut [u8; RESPONSE_LENGTH])
+                          response: &mut [u8; SHA1_BLOCK_LENGTH])
                           -> Result<()>;
 }
 
@@ -150,7 +151,7 @@ impl ChallengeResponse for YubikeyDevice {
     fn challenge_response(&mut self,
                           params: ChallengeResponseParams,
                           challenge: &[u8],
-                          response: &mut [u8; RESPONSE_LENGTH])
+                          response: &mut [u8; SHA1_BLOCK_LENGTH])
                           -> Result<()> {
 
         // check version of yubikey
@@ -162,7 +163,7 @@ impl ChallengeResponse for YubikeyDevice {
                                                                                        version_triple))));
         }
 
-        let may_block = ffi::YK_FLAG_MAYBLOCK;
+        let may_block = 1;
         let yk_cmd = match params.slot {
             1 => {
                 if params.is_hmac {
@@ -186,7 +187,7 @@ impl ChallengeResponse for YubikeyDevice {
                                        may_block,
                                        challenge.len() as u32,
                                        challenge.as_ptr(),
-                                       ffi::SHA1_MAX_BLOCK_SIZE as u32,
+                                       response.len() as u32,
                                        response.as_mut_ptr())
         };
 
