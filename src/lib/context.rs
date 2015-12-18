@@ -261,7 +261,7 @@ pub mod tests {
         let (keyfile_path, keyfile_temp_file) = temp_context.write_keyfile(Some(Path::new("test_subdir")), &expected_content).unwrap();
 
         let key_contents = temp_context.main_context.read_keyfile(&keyfile_path).unwrap();
-        assert_eq!(key_contents.as_vec(), &expected_content as &[u8]);
+        assert_eq!(key_contents.as_slice(), &expected_content as &[u8]);
 
         // not strictly necessary because destructor will probably run. Avoid the unused variable warning anyway
         keyfile_temp_file.close().unwrap();

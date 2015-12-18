@@ -246,6 +246,8 @@ mod tests {
             keyfile: Some(keyfile_path.to_path_buf()),
             backup_context: None,
             name: Some("a_name".to_string()),
+            yubikey_entry_type: None,
+            yubikey_slot: None,
         };
         enroll_op.apply().unwrap();
 

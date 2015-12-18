@@ -17,13 +17,17 @@ pub type Version = (i32, i32, i32);
 pub const SHA1_BLOCK_LENGTH: usize = ffi::SHA1_MAX_BLOCK_SIZE;
 pub const SHA1_RESPONSE_LENGTH: usize = ffi::SHA1_DIGEST_SIZE;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum ValidationError {
     InvalidSlot,
-    MinimumVersionNotMet(String),
+    MinimumVersionNotMet {
+        expected: Version,
+        got: Version,
+    },
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Error {
     Validation(ValidationError),
     UsbError,
@@ -95,41 +99,56 @@ impl Drop for YubikeyDevice {
     }
 }
 
-pub struct YubikeyStatus {
+pub struct YubikeyDeviceStatus {
     status: *mut ffi::yk_status_st,
 }
 
-impl Drop for YubikeyStatus {
+impl Drop for YubikeyDeviceStatus {
     fn drop(&mut self) {
         unsafe { ffi::ykds_free(self.status) }
     }
 }
 
-impl YubikeyDevice {
-    pub fn new() -> Result<YubikeyDevice> {
+pub trait YubikeyStatus {
+    fn get_version_triple(&self) -> Version;
+    fn get_programming_seq(&self) -> i32;
+    fn get_touch_level(&self) -> i32;
+}
+
+pub trait Yubikey {
+    type Status;
+
+    fn new() -> Result<Self> where Self: Sized;
+    fn get_status(&self) -> Result<Self::Status> where Self::Status: YubikeyStatus;
+}
+
+impl Yubikey for YubikeyDevice {
+    type Status = YubikeyDeviceStatus;
+
+    fn new() -> Result<YubikeyDevice> {
         yk_init().and_then(|_| NullPtr::wrap_err(unsafe { ffi::yk_open_first_key() }).map(|key| YubikeyDevice { key: key }))
     }
 
-    pub fn get_status(&self) -> Result<YubikeyStatus> {
+    fn get_status(&self) -> Result<Self::Status> {
         NullPtr::wrap_err(unsafe { ffi::ykds_alloc() })
             .and_then(|status| Error::from_zero_err(unsafe { ffi::yk_get_status(self.key, status) }).map(|_| status))
-            .map(|status| YubikeyStatus { status: status })
+            .map(|status| YubikeyDeviceStatus { status: status })
     }
 }
 
-impl YubikeyStatus {
-    pub fn get_version_triple(&self) -> Version {
+impl YubikeyStatus for YubikeyDeviceStatus {
+    fn get_version_triple(&self) -> Version {
         let major = unsafe { ffi::ykds_version_major(self.status) };
         let minor = unsafe { ffi::ykds_version_minor(self.status) };
         let build = unsafe { ffi::ykds_version_build(self.status) };
         (major, minor, build)
     }
 
-    pub fn get_programming_seq(&self) -> i32 {
+    fn get_programming_seq(&self) -> i32 {
         unsafe { ffi::ykds_pgm_seq(self.status) }
     }
 
-    pub fn get_touch_level(&self) -> i32 {
+    fn get_touch_level(&self) -> i32 {
         unsafe { ffi::ykds_touch_level(self.status) }
     }
 }
@@ -158,9 +177,10 @@ impl ChallengeResponse for YubikeyDevice {
         let status = try!(self.get_status());
         let version_triple = status.get_version_triple();
         if version_triple < MIN_VERSION_CHAL_RESP {
-            return Err(Error::Validation(ValidationError::MinimumVersionNotMet(format!("Expected physical device version >= {:?}, got {:?}",
-                                                                                       MIN_VERSION_CHAL_RESP,
-                                                                                       version_triple))));
+            return Err(Error::Validation(ValidationError::MinimumVersionNotMet {
+                expected: MIN_VERSION_CHAL_RESP,
+                got: version_triple,
+            }));
         }
 
         let may_block = 1;
